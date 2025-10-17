@@ -7,9 +7,15 @@ class BirdieAPI(FastAPI):
                  init_func: Callable,
                  interact_func: Callable,
                  input_func: Callable,
+                 post_process_func: Callable,
                  **kwargs
                  ):
         super().__init__(**kwargs)
         self.add_api_route("/initialize", init_func, methods=["POST"])
         self.add_api_route("/interact", interact_func, methods=["POST"])
         self.add_api_route("/input", input_func, methods=["GET"])
+        self.add_api_route(
+            "/post-process",
+            post_process_func,
+            methods=["POST"]
+        )
