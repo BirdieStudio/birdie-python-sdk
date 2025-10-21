@@ -379,13 +379,14 @@ class InputFactSheet(BaseInput):
     async def validate(
             self,
             value: str,
-            factsheet_function: Callable,
+            factsheet_function: Optional[Callable] = None,
             **args
     ):
         await super().validate(value, **args)
         if value is None:
             return
-        value = await factsheet_function(value)
+        if factsheet_function:
+            value = await factsheet_function(value)
         if not isinstance(value, dict):
             raise TypeError(
                 f"'{
