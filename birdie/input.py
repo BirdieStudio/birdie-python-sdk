@@ -1,7 +1,7 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 from starlette.responses import JSONResponse
 
@@ -35,7 +35,7 @@ class BaseInput(ABC):
         return JSONResponse(self.schema())
 
     @abstractmethod
-    def validate(self, value: Any):
+    async def validate(self, value: Any, **args):
         """
         Validates the given value against the input's rules.
         Raises TypeError or ValueError on failure.
@@ -44,6 +44,7 @@ class BaseInput(ABC):
             raise ValueError(
                 f"'{self.title}' is a required field and cannot be None."
             )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -98,8 +99,8 @@ class InputString(BaseInput):
         self.lower = lower
         self.multi_line = multi_line
 
-    def validate(self, value: str):
-        super().validate(value)
+    async def validate(self, value: str, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, str):
@@ -123,6 +124,8 @@ class InputString(BaseInput):
             raise ValueError(f"'{self.title}' must be in uppercase.")
         if self.lower and not value.islower():
             raise ValueError(f"'{self.title}' must be in lowercase.")
+
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -148,8 +151,8 @@ class InputNumber(BaseInput):
         self.min_val = min_val
         self.max_val = max_val
 
-    def validate(self, value: Union[int, float]):
-        super().validate(value)
+    async def validate(self, value: Union[int, float], **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, (int, float)):
@@ -172,6 +175,7 @@ class InputNumber(BaseInput):
                         self.min_val
                     } ."
                 )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -197,8 +201,8 @@ class InputInteger(BaseInput):
         self.min_val = min_val
         self.max_val = max_val
 
-    def validate(self, value: int):
-        super().validate(value)
+    async def validate(self, value: int, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, int):
@@ -221,6 +225,7 @@ class InputInteger(BaseInput):
                         self.min_val
                     }."
                 )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -250,8 +255,8 @@ class InputMultiselect(BaseInput):
         if not self.max_selections:
             self.max_selections = len(values)
 
-    def validate(self, value: list):
-        super().validate(value)
+    async def validate(self, value: list, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, list):
@@ -275,11 +280,11 @@ class InputMultiselect(BaseInput):
                     self.values
                 }."
             )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
         init_args = fields.copy()
-        print(init_args)
         init_args.pop("type", None)
         return InputMultiselect(**init_args)
 
@@ -299,8 +304,8 @@ class InputRadio(BaseInput):
         )
         self.values = values
 
-    def validate(self, value: Union[str, int, float]):
-        super().validate(value)
+    async def validate(self, value: Union[str, int, float], **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if value not in self.values:
@@ -309,6 +314,7 @@ class InputRadio(BaseInput):
                     self.values
                 }."
             )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -332,8 +338,8 @@ class InputFile(BaseInput):
             ft if ft.startswith(".") else f".{ft}" for ft in filetypes
         ]
 
-    def validate(self, value: str):
-        super().validate(value)
+    async def validate(self, value: str, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, str):
@@ -348,12 +354,12 @@ class InputFile(BaseInput):
                     self.filetypes
                 }."
             )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
         init_args = fields.copy()
         init_args.pop("type", None)
-
         return InputFile(**init_args)
 
 
@@ -370,10 +376,16 @@ class InputFactSheet(BaseInput):
         super().__init__(title, description, "factsheet", None, None, required)
         self.data_groups = data_groups
 
-    def validate(self, value: str):
-        super().validate(value)
+    async def validate(
+            self,
+            value: str,
+            factsheet_function: Callable,
+            **args
+    ):
+        await super().validate(value, **args)
         if value is None:
             return
+        value = await factsheet_function(value)
         if not isinstance(value, dict):
             raise TypeError(
                 f"'{
@@ -390,6 +402,7 @@ class InputFactSheet(BaseInput):
                     self.data_groups
                 }."
             )
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -416,8 +429,8 @@ class InputGroup(BaseInput):
         schema_dict["values"] = [child.schema() for child in self.values]
         return schema_dict
 
-    def validate(self, value: dict):
-        super().validate(value)
+    def validate(self, value: dict, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, dict):
@@ -428,7 +441,8 @@ class InputGroup(BaseInput):
             )
         child_inputs = {child.title: child for child in self.values}
         for title, child_input in child_inputs.items():
-            child_input.validate(value.get(title))
+            value[title] = await child_input.validate(value.get(title), **args)
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -464,8 +478,8 @@ class InputList(BaseInput):
         schema_dict["object"] = self.object.schema()
         return schema_dict
 
-    def validate(self, value: list):
-        super().validate(value)
+    def validate(self, value: list, **args):
+        await super().validate(value, **args)
         if value is None:
             return
         if not isinstance(value, list):
@@ -488,11 +502,13 @@ class InputList(BaseInput):
 
         for i, item in enumerate(value):
             try:
-                self.object.validate(item)
+                value[i] = await self.object.validate(item, **args)
             except (ValueError, TypeError) as e:
                 raise type(e)(
                     f"Error in '{self.title}' at index {i}: {e}"
                 ) from e
+
+        return value
 
     @staticmethod
     def reconstruct(fields: dict):
