@@ -430,7 +430,7 @@ class InputGroup(BaseInput):
         schema_dict["values"] = [child.schema() for child in self.values]
         return schema_dict
 
-    def validate(self, value: dict, **args):
+    async def validate(self, value: dict, **args):
         await super().validate(value, **args)
         if value is None:
             return
@@ -479,7 +479,7 @@ class InputList(BaseInput):
         schema_dict["object"] = self.object.schema()
         return schema_dict
 
-    def validate(self, value: list, **args):
+    async def validate(self, value: list, **args):
         await super().validate(value, **args)
         if value is None:
             return
