@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Any, Optional
 
 
 class ResultBase(BaseModel):
@@ -11,5 +11,9 @@ class ResultText(ResultBase):
 
 
 class ResultModel(BaseModel):
-    result: List[ResultText] = Field(...)
+    content: str = Field(...)
+    state: Optional[dict] = Field(None)
+    parts: Optional[Any] = Field(None)
+    step: int = Field(...)
+    result: Optional[List[ResultText]] = Field([])
     final_result: bool = Field(False)
