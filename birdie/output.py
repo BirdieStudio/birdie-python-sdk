@@ -9,11 +9,13 @@ class ResultBase(BaseModel):
 class ResultText(ResultBase):
     text: str = Field(...)
 
+class ResultPDF(ResultBase):
+    content: str = Field(...)
 
 class ResultModel(BaseModel):
     content: str = Field(...)
     state: Optional[dict] = Field(None)
     parts: Optional[Any] = Field(None)
     step: int = Field(...)
-    result: Optional[List[ResultText]] = Field([])
+    result: Optional[List[ResultText|ResultPDF]] = Field([])
     final_result: bool = Field(False)
