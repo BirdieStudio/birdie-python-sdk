@@ -12,6 +12,12 @@ class ResultText(ResultBase):
 class ResultPDF(ResultBase):
     content: str = Field(...)
 
+class ResultImage(ResultBase):
+    content: str = Field(...)
+
+class ResultHTML(ResultBase):
+    content: str = Field(...)
+
 class ResultModel(BaseModel):
     content: str = Field(...)
     state: Optional[dict] = Field(None)
