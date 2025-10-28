@@ -7,21 +7,29 @@ class ResultBase(BaseModel):
 
 
 class ResultText(ResultBase):
+    type: str = "text"
     text: str = Field(...)
 
+
 class ResultPDF(ResultBase):
+    type: str = "pdf"
     content: str = Field(...)
+
 
 class ResultImage(ResultBase):
+    type: str = "image"
     content: str = Field(...)
 
+
 class ResultHTML(ResultBase):
+    type: str = "html"
     content: str = Field(...)
+
 
 class ResultModel(BaseModel):
     content: str = Field(...)
     state: Optional[dict] = Field(None)
     parts: Optional[Any] = Field(None)
     step: int = Field(...)
-    result: Optional[List[ResultText|ResultPDF|ResultHTML|ResultImage]] = Field([])
+    result: Optional[List[ResultText | ResultPDF | ResultHTML | ResultImage]] = Field([])  # noqa: E501
     final_result: bool = Field(False)
