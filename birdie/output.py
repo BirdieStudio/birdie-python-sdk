@@ -23,5 +23,5 @@ class ResultModel(BaseModel):
     state: Optional[dict] = Field(None)
     parts: Optional[Any] = Field(None)
     step: int = Field(...)
-    result: Optional[List[ResultText|ResultPDF]] = Field([])
+    result: Optional[List[ResultText|ResultPDF|ResultHTML|ResultImage]] = Field([])
     final_result: bool = Field(False)
