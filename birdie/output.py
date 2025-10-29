@@ -8,7 +8,7 @@ class ResultBase(BaseModel):
 
 class ResultText(ResultBase):
     type: str = "text"
-    text: str = Field(...)
+    content: str = Field(...)
 
 
 class ResultPDF(ResultBase):
