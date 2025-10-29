@@ -1,7 +1,7 @@
 from typing import Callable
 from fastapi import FastAPI
 
-from birdie.output import ResultModel
+from birdie.output import ResultModel, InteractModel
 
 
 class BirdieAPI(FastAPI):
@@ -18,9 +18,17 @@ class BirdieAPI(FastAPI):
             methods=["POST"],
             response_model=ResultModel
         )
+
+        async def interact_wrapper(input: InteractModel):
+            return await interact_func(
+                input.message,
+                input.state,
+                input.result
+            )
+
         self.add_api_route(
             "/interact",
-            interact_func,
+            interact_wrapper,
             methods=["POST"],
             response_model=ResultModel
         )
