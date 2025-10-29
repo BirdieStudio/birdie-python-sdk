@@ -1,7 +1,8 @@
 from typing import Callable
 from fastapi import FastAPI
 
-from birdie.output import ResultModel, InteractModel
+from birdie.output import ResultModel
+from birdie.input import InteractModel
 
 
 class BirdieAPI(FastAPI):
