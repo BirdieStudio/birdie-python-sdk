@@ -1,6 +1,6 @@
 [project]
 name = "birdie"
-version = "0.1.13"
+version = "0.1.14"
 description = "A simple permissive framework to interact with the birdie platform"
 readme = "README.md"
 requires-python = ">=3.13"

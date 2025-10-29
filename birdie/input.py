@@ -1,9 +1,17 @@
 import json
 import re
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Optional, Union
-
+from typing import Any, Dict, Callable, List, Optional, Union
+from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
+
+
+class InteractModel(BaseModel):
+    message: str = Field(..., description="The message for the app")
+    state: Optional[Dict] = Field(None)
+    result: Optional[Dict | List]
+
+
 
 
 class BaseInput(ABC):
