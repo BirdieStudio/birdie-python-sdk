@@ -356,12 +356,6 @@ class InputFile(BaseInput):
                     type(value).__name__
                 }."
             )
-        if not value.lower().endswith(tuple(self.filetypes)):
-            raise ValueError(
-                f"'{self.title}' must be one of the following file types: {
-                    self.filetypes
-                }."
-            )
         return value
 
     @staticmethod
