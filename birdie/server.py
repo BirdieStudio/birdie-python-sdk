@@ -42,7 +42,7 @@ class BirdieAPI(FastAPI):
 
         self.add_api_route(
             "/initialize",
-            init_func,
+            init_wrapper,
             methods=["POST"],
             response_model=ResultModel
         )
