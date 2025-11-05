@@ -10,8 +10,8 @@ class InteractModel(BaseModel):
     message: str = Field(..., description="The message for the app")
     state: Optional[Dict] = Field(None)
     result: Optional[Dict | List]
-    _host: str = Field(...)
-    _token: str = Field(...)
+    birdie_host: str = Field(...)
+    birdie_token: str = Field(...)
 
 
 class BaseInput(ABC):

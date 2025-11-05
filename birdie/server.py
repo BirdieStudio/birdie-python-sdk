@@ -27,9 +27,9 @@ class BirdieAPI(FastAPI):
                 title: str,
                 description: str
             ):
-                url = f"{input.host}/api/v1/chat/webhook/progress"
+                url = f"{input.birdie_host}/api/v1/chat/webhook/progress"
                 headers = {
-                    "Authorization": f"Bearer {input.token}",
+                    "Authorization": f"Bearer {input.birdie_token}",
                     "Content-Type": "application/json"
                 }
                 data = {
