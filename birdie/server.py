@@ -15,7 +15,7 @@ class BirdieAPI(FastAPI):
                  ):
         super().__init__(**kwargs)
 
-        async def init_wrapper(input):
+        async def init_wrapper(input: dict):
             async def update_progress(
                 title: str,
                 description: str
@@ -42,7 +42,7 @@ class BirdieAPI(FastAPI):
 
         self.add_api_route(
             "/initialize",
-            init_wrapper,
+            init_func,
             methods=["POST"],
             response_model=ResultModel
         )
