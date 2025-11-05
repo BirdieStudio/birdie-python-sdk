@@ -23,10 +23,30 @@ class BirdieAPI(FastAPI):
         )
 
         async def interact_wrapper(input: InteractModel):
+            async def update_progress(
+                title: str,
+                description: str
+            ):
+                url = f"{input.host}/api/v1/chat/webhook/progress"
+                headers = {
+                    "Authorization": f"Bearer {input.token}",
+                    "Content-Type": "application/json"
+                }
+                data = {
+                    "title": title,
+                    "description": description
+                }
+
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(url, json=data, headers=headers)
+                    response.raise_for_status()
+                    return response.json()
+
             return await interact_func(
                 input.message,
                 input.state,
-                input.result
+                input.result,
+                update_progress
             )
 
         self.add_api_route(
@@ -42,24 +62,4 @@ class BirdieAPI(FastAPI):
         )
 
 
-async def update_progress(
-    self,
-    _host: str,
-    _token: str,
-    title: str,
-    description: str
-):
-    url = f"{_host}/api/v1/chat/webhook/progress"
-    headers = {
-        "Authorization": f"Bearer {_token}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "title": title,
-        "description": description
-    }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=data, headers=headers)
-        response.raise_for_status()
-        return response.json()
