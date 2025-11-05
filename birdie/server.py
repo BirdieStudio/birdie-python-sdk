@@ -1,5 +1,6 @@
 from typing import Callable
 from fastapi import FastAPI
+import httpx
 
 from birdie.output import ResultModel
 from birdie.input import InteractModel
@@ -13,6 +14,7 @@ class BirdieAPI(FastAPI):
                  **kwargs
                  ):
         super().__init__(**kwargs)
+
         self.add_api_route(
             "/initialize",
             init_func,
@@ -38,3 +40,26 @@ class BirdieAPI(FastAPI):
             input_func,
             methods=["GET"]
         )
+
+
+async def update_progress(
+    self,
+    _host: str,
+    _token: str,
+    title: str,
+    description: str
+):
+    url = f"{_host}/api/v1/chat/webhook/progress"
+    headers = {
+        "Authorization": f"Bearer {_token}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "title": title,
+        "description": description
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=data, headers=headers)
+        response.raise_for_status()
+        return response.json()
