@@ -15,9 +15,34 @@ class BirdieAPI(FastAPI):
                  ):
         super().__init__(**kwargs)
 
+        async def init_wrapper(input):
+            async def update_progress(
+                title: str,
+                description: str
+            ):
+                url = f"{input['birdie_host']}/api/v1/chat/webhook/progress"
+                headers = {
+                    "Authorization": f"Bearer {input['birdie_token']}",
+                    "Content-Type": "application/json"
+                }
+                data = {
+                    "title": title,
+                    "description": description
+                }
+
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(url, json=data, headers=headers)
+                    response.raise_for_status()
+                    return response.json()
+
+            return await init_func(
+                input,
+                update_progress
+            )
+
         self.add_api_route(
             "/initialize",
-            init_func,
+            init_wrapper,
             methods=["POST"],
             response_model=ResultModel
         )
