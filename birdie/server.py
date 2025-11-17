@@ -32,7 +32,6 @@ class BirdieAPI(FastAPI):
 
                 async with httpx.AsyncClient() as client:
                     response = await client.post(url, json=data, headers=headers)
-                    response.raise_for_status()
                     return response.json()
 
             return await init_func(
@@ -64,7 +63,6 @@ class BirdieAPI(FastAPI):
 
                 async with httpx.AsyncClient() as client:
                     response = await client.post(url, json=data, headers=headers)
-                    response.raise_for_status()
                     return response.json()
 
             return await interact_func(
