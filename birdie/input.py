@@ -25,6 +25,7 @@ class BaseInput(ABC):
         placeholder: Optional[str] = None,
         default: Optional[Any] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None,
     ):
         self.title = title
         self.description = description
@@ -32,6 +33,7 @@ class BaseInput(ABC):
         self.placeholder = placeholder
         self.default = default
         self.required = required
+        self.depends_on = depends_on or {}
 
     def schema(self) -> dict:
         """
@@ -80,6 +82,37 @@ class BaseInput(ABC):
                 f"Unknown input type for reconstruction: '{input_type}'"
             )
         return target_class.reconstruct(fields)
+    
+    def is_shown(self, parent_values: dict) -> bool:
+        """
+        Determines if the input should be shown based on its dependencies.
+        
+        Rules:
+        1. No dependencies (empty dict) → always show
+        2. depends_on with a list of values → show if parent value is in that list
+        3. depends_on with empty list → show if parent value exists (any value)
+        """
+        if not self.depends_on:
+            return True 
+        
+        if not parent_values:
+            return False
+
+
+        for parent_title, expected_value in self.depends_on.items():
+            parent_actual = parent_values.get(parent_title)
+
+            if expected_value == []:
+                if not parent_actual:
+                    return False
+                continue
+
+
+            elif parent_actual not in expected_value:
+                return False
+
+        return True
+
 
 
 class InputString(BaseInput):
@@ -96,9 +129,10 @@ class InputString(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[str] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None,
     ):
         super().__init__(
-            title, description, "string", placeholder, default, required
+            title, description, "string", placeholder, default, required, depends_on
         )
         self.min_len = min_len
         self.max_len = max_len
@@ -152,9 +186,10 @@ class InputNumber(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[Union[int, float]] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
         super().__init__(
-            title, description, "number", placeholder, default, required
+            title, description, "number", placeholder, default, required, depends_on
         )
         self.min_val = min_val
         self.max_val = max_val
@@ -202,9 +237,10 @@ class InputInteger(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[int] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
         super().__init__(
-            title, description, "integer", placeholder, default, required
+            title, description, "integer", placeholder, default, required, depends_on
         )
         self.min_val = min_val
         self.max_val = max_val
@@ -252,10 +288,11 @@ class InputMultiselect(BaseInput):
         max_selections: Union[int, None] = None,
         placeholder: Optional[str] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None,
         **args,  # Needed as Multiselect does not support a default value
     ):
         super().__init__(
-            title, description, "multiselect", placeholder, None, required
+            title, description, "multiselect", placeholder, None, required, depends_on
         )
         self.values = values
         self.min_selections = min_selections
@@ -306,9 +343,10 @@ class InputRadio(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[Union[str, int, float]] = None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
         super().__init__(
-            title, description, "radio", placeholder, default, required
+            title, description, "radio", placeholder, default, required,depends_on
         )
         self.values = values
 
@@ -340,8 +378,9 @@ class InputFile(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
-        super().__init__(title, description, "file", None, None, required)
+        super().__init__(title, description, "file", None, None, required, depends_on)
         self.filetypes = [
             ft if ft.startswith(".") else f".{ft}" for ft in filetypes
         ]
@@ -374,8 +413,9 @@ class InputFactSheet(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
-        super().__init__(title, description, "factsheet", None, None, required)
+        super().__init__(title, description, "factsheet", None, None, required, depends_on)
         self.data_groups = data_groups
 
     async def validate(
@@ -423,8 +463,9 @@ class InputGroup(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
-        super().__init__(title, description, "group", None, None, required)
+        super().__init__(title, description, "group", None, None, required, depends_on)
         self.values = values
 
     def schema(self) -> dict:
@@ -443,9 +484,15 @@ class InputGroup(BaseInput):
                 }."
             )
         child_inputs = {child.title: child for child in self.values}
+        validated_values = {}
+
         for title, child_input in child_inputs.items():
-            value[title] = await child_input.validate(value.get(title), **args)
-        return value
+            if hasattr(child_input, "depends_on") and not child_input.is_shown(value):
+                continue
+
+            else:
+                validated_values[title] = await child_input.validate(value.get(title), **args)
+        return validated_values
 
     @staticmethod
     def reconstruct(fields: dict):
@@ -470,8 +517,9 @@ class InputList(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
+        depends_on: Optional[Dict[str, List[str]]] = None
     ):
-        super().__init__(title, description, "list", None, None, required)
+        super().__init__(title, description, "list", None, None, required, depends_on)
         self.min_items = min_items
         self.max_items = max_items
         self.object = obj
@@ -499,7 +547,7 @@ class InputList(BaseInput):
             if not (len(value) <= self.max_items):
                 raise ValueError(
                     f"'{self.title}' must contain no more than {
-                        self.min_items
+                        self.max_items
                     } items."
                 )
 
