@@ -25,7 +25,7 @@ class BaseInput(ABC):
         placeholder: Optional[str] = None,
         default: Optional[Any] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None,
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None,
     ):
         self.title = title
         self.description = description
@@ -129,7 +129,7 @@ class InputString(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[str] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None,
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None,
     ):
         super().__init__(
             title, description, "string", placeholder, default, required, depends_on
@@ -186,7 +186,7 @@ class InputNumber(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[Union[int, float]] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(
             title, description, "number", placeholder, default, required, depends_on
@@ -237,7 +237,7 @@ class InputInteger(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[int] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(
             title, description, "integer", placeholder, default, required, depends_on
@@ -288,7 +288,7 @@ class InputMultiselect(BaseInput):
         max_selections: Union[int, None] = None,
         placeholder: Optional[str] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None,
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None,
         **args,  # Needed as Multiselect does not support a default value
     ):
         super().__init__(
@@ -343,7 +343,7 @@ class InputRadio(BaseInput):
         placeholder: Optional[str] = None,
         default: Optional[Union[str, int, float]] = None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(
             title, description, "radio", placeholder, default, required,depends_on
@@ -378,7 +378,7 @@ class InputFile(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(title, description, "file", None, None, required, depends_on)
         self.filetypes = [
@@ -413,7 +413,7 @@ class InputFactSheet(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(title, description, "factsheet", None, None, required, depends_on)
         self.data_groups = data_groups
@@ -463,7 +463,7 @@ class InputGroup(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(title, description, "group", None, None, required, depends_on)
         self.values = values
@@ -517,7 +517,7 @@ class InputList(BaseInput):
         placeholder=None,
         default=None,
         required: bool = True,
-        depends_on: Optional[Dict[str, List[str]]] = None
+        depends_on: Optional[Dict[str, List[str | int | float]]] = None
     ):
         super().__init__(title, description, "list", None, None, required, depends_on)
         self.min_items = min_items
