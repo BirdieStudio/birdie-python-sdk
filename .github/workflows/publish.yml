@@ -2,17 +2,13 @@ name: Python package
 
 on:
   workflow_run:
-    workflows: ["Run Tests"]
+    workflows: [Run Tests]
     types:
       - completed
-    branches:
-      - development
-      - main
-
 
 jobs:
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success'}}
+    # if: ${{ github.event.workflow_run.conclusion == 'success'}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
