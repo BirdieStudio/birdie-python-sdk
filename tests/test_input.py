@@ -13,7 +13,6 @@ from birdie.input import (
     InputList,
 )
 
-@pytest.fixture
 def create_simple_schema() -> BaseInput:
     """Creates a schema using string, number, and integer types."""
     return InputGroup(
@@ -58,7 +57,6 @@ def create_simple_schema() -> BaseInput:
         ],
     )
 
-@pytest.fixture
 def create_middle_schema() -> BaseInput:
     """Creates a schema including radio, multiselect, and factsheet."""
     return InputGroup(
@@ -110,7 +108,6 @@ def create_middle_schema() -> BaseInput:
         ],
     )
 
-@pytest.fixture
 def create_advanced_schema() -> BaseInput:
     """Creates a schema with nested InputGroup and InputList."""
     # Define a reusable child group for a list
@@ -188,6 +185,107 @@ def create_advanced_schema() -> BaseInput:
     )
 
 
+def create_input_schema_depends():
+    return InputGroup(
+        title="Social Post Creator",
+        description="Generate optimized LinkedIn posts (organic or paid) with optional AI-generated images.",
+        values=[
+            InputString(
+                title="Topic",
+                description="What is this post about? Be specific about the main subject or theme.",
+                min_len=5,
+                max_len=500,
+                placeholder="e.g., Launching our new marine coating product line with 25-year durability",
+                required=True,
+            ),
+            InputString(
+                title="Key Points",
+                description="Specific points or messages to include (optional)",
+                min_len=0,
+                max_len=1000,
+                placeholder="e.g., 25-year guarantee, eco-friendly formula, proven on 500+ vessels",
+                required=False,
+            ),
+            InputRadio(
+                title="Image Option",
+                description="Do you want to generate an image, upload one, or post without an image?",
+                values=["Generate Image", "Upload Image", "No Image"],
+                default="No Image",
+                required=True,
+            ),
+            InputString(
+                title="Reference Images",
+                description="Optional reference images",
+                min_len=5,
+                max_len=500,
+                required=False,
+                depends_on={"Image Option" : ["Generate Image"], "Topic" : []}
+            ),
+            InputRadio(
+                title="Image Size Preset",
+                description="Target image size",
+                values=["1:1", "16:9", "9:16"],
+                default="1:1",
+                required=False,
+                depends_on={"Image Option" : ["Generate Image", "Upload Image"]}
+            ),
+            InputRadio(
+                title="Safety Level",
+                description="Content safety filtering",
+                values=["standard", "strict"],
+                default="standard",
+                required=False,
+                depends_on={"Image Option" : ["Generate Image"]}
+
+            ),
+            InputString(
+                title="Upload Image",
+                description="Upload your own image (only if 'Upload Image' selected)",
+                min_len=5,
+                max_len=500,
+                required=False,
+                depends_on={"Image Option" : ["Upload Image"]}
+            ),
+        ],
+    )
+
+depends_data_1 = {
+    "Topic" : "A new employee at Birdie",
+    "Image Option" : "Generate Image",
+    "Reference Images" : "a picture of the new employee",
+    "Image Size Preset" : "16:9",
+    "Safety Level" : "strict",
+    "Upload Image" : "I have uploaded an image",
+}
+
+depends_data_2 = {
+    "Topic" : "A new employee at Birdie",
+    "Image Option" : "Upload Image",
+    "Reference Images" : "a picture of the new employee",
+    "Image Size Preset" : "16:9",
+    "Safety Level" : "strict",
+    "Upload Image" : "I have uploaded an image",
+}
+
+depends_data_3 = {
+    "Topic" : "A new employee at Birdie",
+    "Image Option" : "No Image",
+    "Reference Images" : "a picture of the new employee",
+    "Image Size Preset" : "16:9",
+    "Safety Level" : "strict",
+    "Upload Image" : "I have uploaded an image",
+}
+
+depends_data_bad = {
+    "Topic" : "",
+    "Image Option" : "No Image",
+    "Reference Images" : "a picture of the new employee",
+    "Image Size Preset" : "16:9",
+    "Safety Level" : "strict",
+    "Upload Image" : "I have uploaded an image",
+}
+
+
 simple_data = {
     "Username": "validuser1",
     "Price": 125.50,
@@ -224,18 +322,18 @@ advanced_data = {
     "Regions": ["Europe"],
 }
 
-
-def validate_form(form_generator, data):
+@pytest.mark.asyncio
+async def validate_form(form_generator, data):
     """Helper to reconstruct schema and validate data."""
     form = form_generator()
     reconstructed_form = BaseInput.reconstruct(form.schema())
-    return reconstructed_form.validate(data)
+    return await reconstructed_form.validate(data)
 
-
-def test_simple_validation():
+@pytest.mark.asyncio
+async def test_simple_validation():
     """Test valid data passes for simple schema."""
 
-    result = validate_form(create_simple_schema, simple_data)
+    result = await validate_form(create_simple_schema, simple_data)
     assert result["Username"] == simple_data["Username"]
     assert result["Price"] == simple_data["Price"]
     assert result["Quantity"] == simple_data["Quantity"]
@@ -243,12 +341,12 @@ def test_simple_validation():
     bad_data = simple_data.copy()
     bad_data["Price"] = -10
     with pytest.raises(ValueError):
-        validate_form(create_simple_schema, bad_data)
+        await validate_form(create_simple_schema, bad_data)
 
-
-def test_middle_validation():
+@pytest.mark.asyncio
+async def test_middle_validation():
     """Test valid data passes for middle schema."""
-    result = validate_form(create_middle_schema, middle_data)
+    result = await validate_form(create_middle_schema, middle_data)
     assert result["Full Name"] == middle_data["Full Name"]
     assert result["Subscription Tier"] == middle_data["Subscription Tier"]
     assert set(result["Preferred Contact Methods"]) == set(
@@ -257,11 +355,12 @@ def test_middle_validation():
     bad_data = middle_data.copy()
     bad_data["Preferred Contact Methods"] = []  # Less than min_selections
     with pytest.raises(ValueError):
-        validate_form(create_middle_schema, bad_data)
+        await validate_form(create_middle_schema, bad_data)
 
-def test_advanced_validation():
+@pytest.mark.asyncio
+async def test_advanced_validation():
     """Test valid data passes for advanced schema."""
-    result = validate_form(create_advanced_schema, advanced_data)
+    result = await validate_form(create_advanced_schema, advanced_data)
     assert result["Company Name"] == advanced_data["Company Name"]
     assert len(result["Team Members"]) == len(advanced_data["Team Members"])
     assert result["Administrative Contact"]["Name"] == "Bob"
@@ -269,4 +368,41 @@ def test_advanced_validation():
     # Make a team member email invalid
     bad_data["Team Members"][0]["Email"] = "not-an-email"
     with pytest.raises(ValueError):
-        validate_form(create_advanced_schema, bad_data)
+        await validate_form(create_advanced_schema, bad_data)
+
+
+@pytest.mark.asyncio
+async def test_depends_on():
+    """Testing if the depends_on works with the input groups and validation"""
+    result1 = await validate_form(create_input_schema_depends, depends_data_1)
+    print(f"Result 1 : {result1}")
+    assert result1["Topic"] == "A new employee at Birdie"
+    assert result1["Image Option"] == "Generate Image"
+    assert result1["Reference Images"] == "a picture of the new employee"
+    assert "Upload Image" not in result1
+    assert "Safety Level" in result1
+
+    result2 = await validate_form(create_input_schema_depends, depends_data_2)
+    print(f"Result 2 : {result2}")
+    assert result2["Topic"] == "A new employee at Birdie"
+    assert result2["Image Option"] == "Upload Image"
+    assert result2["Upload Image"] == "I have uploaded an image"
+    assert "Reference Images" not in result2
+    assert "Safety Level" not in result2
+
+    result3 = await validate_form(create_input_schema_depends, depends_data_3)
+    print(f"Result 3 : {result3}")
+    assert result3["Topic"] == "A new employee at Birdie"
+    assert result3["Image Option"] == "No Image"
+    assert "Reference Images" not in result3
+    assert "Safety Level" not in result3
+    assert "Upload Image" not in result3
+    assert "Image Size Preset" not in result3
+
+    with pytest.raises(ValueError):
+        await validate_form(create_input_schema_depends, depends_data_bad)
+
+
+
+
+
