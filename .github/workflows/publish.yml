@@ -25,6 +25,8 @@ jobs:
         run: |
           uv sync --all-extras
           uv pip install build twine
+          uv pip install toml
+          
       - name: Bump patch version
         run: |
           python - <<'EOF'
