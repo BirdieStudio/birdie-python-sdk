@@ -3,7 +3,16 @@ name: Python package
 on: [push]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Pytest
+        run: |
+          uv run pytest
   build:
+    needs: test
+    if: ${{ success() }} 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

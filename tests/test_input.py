@@ -339,7 +339,7 @@ async def test_simple_validation():
     assert result["Quantity"] == simple_data["Quantity"]
     assert result["API Key (Uppercase)"] == simple_data["API Key (Uppercase)"]
     bad_data = simple_data.copy()
-    bad_data["Price"] = -10
+    bad_data["Price"] = 10
     with pytest.raises(ValueError):
         await validate_form(create_simple_schema, bad_data)
 
