@@ -66,16 +66,10 @@ class BirdieAPI(FastAPI):
                     "title": title,
                     "description": description
                 }
-                try:
-                    async with httpx.AsyncClient() as client:
-                        response = await client.post(
-                            url,
-                            json=data,
-                            headers=headers
-                        )
-                        return response.json()
-                except Exception as e:
-                    print(f"Failed to send update: {e}")
+
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(url, json=data, headers=headers)
+                    return response.json()
 
             return await interact_func(
                 input.message,
@@ -95,3 +89,6 @@ class BirdieAPI(FastAPI):
             input_func,
             methods=["GET"]
         )
+
+
+
