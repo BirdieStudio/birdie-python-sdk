@@ -95,3 +95,6 @@ class BirdieAPI(FastAPI):
             input_func,
             methods=["GET"]
         )
+
+
+
